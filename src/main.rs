@@ -5,8 +5,10 @@ use std::path::Path;
 
 /// On garde le main lisible, en déléguant les responsabilités (chargement, saisie, correction) à des fonctions dédiées.
 fn main() {
+
     // - Chargement d'un dictionnaire de mots.
     let dictionary = load_dictionary("dictionnaire.txt");
+
     // - Sélection aléatoire d'un mot secret.
     let secret_word = match dictionary.choose(&mut rand::thread_rng()) {
         Some(word) => word.clone(),
@@ -17,23 +19,34 @@ fn main() {
 
     let max_attempts = 6;
     let mut attempts_left = max_attempts;
+
     println!("Bienvenue dans Wordle ! Devinez le mot, Vous avez {} tentatives.", max_attempts);
+
     // La boucle principale du jeu - avec chaque itération = une tentative.
+
     while attempts_left > 0 {
         println!("Il vous reste {} tentatives.", attempts_left);
+
         // On impose que le joueur entre un mot de longueur strictement égale à la longueur du mot secret.
-        let guess = user_input(secret_word.len());
+
+        let guess = user_input(secret_word.len(), &dictionary);
+
         // Si le joueur trouve le mot.
+
         if guess == secret_word {
             println!("\x1b[32mBravo ! Vous avez trouvé le mot : {}\x1b[0m", secret_word);
             return;
         } else {
+
             // Sinon on affiche la correction.
             correction(&secret_word, &guess);
         }
+
         attempts_left -= 1;
     }
+
     // Sortie de la boucle , fin de partie.
+
     println!("\x1b[31mVous avez perdu ! Le mot était : {}\x1b[0m", secret_word);
 }
 
@@ -62,17 +75,25 @@ where
 /// Fonction responsable de la saisie utilisateur.
 /// Le choix ici est de forcer la bonne longueur du mot saisi pour garantir la coherence avec le mot secret.
 /// Tant que l'utilisateur ne respecte pas la consigne on ne sort pas de la boucle.
-fn user_input(length: usize) -> String {
+fn user_input(length: usize, dictionary: &Vec<String>) -> String {
     loop {
         println!("Entrez un mot de {} lettres :", length);
         let mut input = String::new();
         io::stdin().read_line(&mut input).expect("erreur");
+
         let input = input.trim().to_string();
 
-        if input.len() == length {
-            return input;
+        if input.len() != length {
+            println!("Le mot doit contenir exactement {} lettres.", length);
+            continue;
         }
-        println!("Le mot doit contenir exactement {} lettres.", length);
+	// Verifie que le mot entree par le joueur est un mot de la langue francaise
+        if !dictionary.contains(&input) {
+            println!("Ce mot n'existe pas dans le dictionnaire.");
+            continue;
+        }
+
+        return input;
     }
 }
 
